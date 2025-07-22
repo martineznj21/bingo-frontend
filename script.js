@@ -35,7 +35,7 @@ function drawNumber() {
   drawnNumbers.push(num);
 
   // ✅ Sync to backend
-  fetch("/api/draws", {
+  fetch("https://bingo-backend-v0gd.onrender.com/api/draws", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ number: Number(num) })
@@ -73,7 +73,7 @@ function clearTV() {
 }
 
 function fetchCurrentGame() {
-  fetch("/api/game")
+  fetch("https://bingo-backend-v0gd.onrender.com/api/game")
 	.then(res => res.json())
 	.then(data => {
 	currentGame = data.currentGame;
@@ -126,7 +126,7 @@ function resetGame() {
   document.getElementById("draw-count").textContent = "0 / 75";
   initializeBoard();
   clearTV();
-  fetch("/api/draws", {
+  fetch("https://bingo-backend-v0gd.onrender.com/api/draws", {
     method: "DELETE"
   }).catch(err => console.error("Failed to clear backend draws", err));
 
@@ -147,7 +147,7 @@ function nextGame() {
 }
 
 function syncGameToBackend(gameNumber) {
-  fetch("/api/game", {
+  fetch("https://bingo-backend-v0gd.onrender.com/api/game", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ game: gameNumber })
@@ -156,5 +156,5 @@ function syncGameToBackend(gameNumber) {
 
 
 function openTVView() {
-  tvWindow = window.open("/tv.html", "_blank", "width=800,height=600");
+  tvWindow = window.open("https://martineznj21.github.io/bingo-frontend/tv.html", "_blank", "width=800,height=600");
 }

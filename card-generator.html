@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Printable Bingo Cards</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <style>
     @media print {
       .no-print { display: none; }
@@ -19,14 +19,18 @@
     .card-cell {
       border: 1px solid #ccc;
       padding: 0.5rem;
-      height: 2rem;
+      height: 3rem;
+      font-size: 1rem;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .free-space {
       background-color: #d1fae5;
       font-weight: bold;
     }
   </style>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 </head>
 <body class="bg-white p-4">
   <div class="no-print mb-4">
@@ -46,13 +50,13 @@
         const { cardElement, code, numbers } = createCard();
         container.appendChild(cardElement);
         existingRegistry[code] = numbers;
-		
-		fetch("/api/cards", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ code, numbers })
-		}).catch(err => console.error("Card API Error:", err));
-	  }
+
+        fetch("/api/cards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, numbers })
+        }).catch(err => console.error("Card API Error:", err));
+      }
       localStorage.setItem("bingoCardRegistry", JSON.stringify(existingRegistry));
     }
 
@@ -63,11 +67,7 @@
       const code = generateCardCode();
       const headers = ["B", "I", "N", "G", "O"];
       const ranges = [
-        [1, 15],
-        [16, 30],
-        [31, 45],
-        [46, 60],
-        [61, 75]
+        [1, 15], [16, 30], [31, 45], [46, 60], [61, 75]
       ];
 
       const grid = document.createElement("div");
@@ -102,23 +102,11 @@
 
       const packLabel = document.createElement("div");
       packLabel.className = "text-left text-xs mt-1 italic";
-      packLabel.textContent = "Tuesday Night Pack";
+      packLabel.textContent = "Shark Pack";
 
       card.appendChild(grid);
       card.appendChild(codeLabel);
       card.appendChild(packLabel);
-
-      const qrContainer = document.createElement("div");
-      qrContainer.className = "mt-2 flex justify-center";
-      const qrCanvas = document.createElement("canvas");
-      qrCanvas.className = "mx-auto";
-      qrContainer.appendChild(qrCanvas);
-      card.appendChild(qrContainer);
-
-      const viewerUrl = `http://muffinbingo.duckdns.org/card-viewer?code=${code}`;
-      QRCode.toCanvas(qrCanvas, viewerUrl, { width: 100 }, err => {
-        if (err) console.error("QR Error", err);
-      });
 
       return { cardElement: card, code, numbers };
     }
