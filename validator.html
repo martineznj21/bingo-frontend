@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bingo Validator</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .matched { background-color: #a7f3d0; }
+    .unmatched { background-color: #fecaca; }
+    .free-space { background-color: #e0f2fe; font-weight: bold; }
+  </style>
+</head>
+<body class="bg-gray-100 p-4 min-h-screen">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Bingo Win Validator</h1>
+    <label for="cardCode" class="block mb-2 font-medium">Enter Card Code:</label>
+    <input type="text" id="cardCode" maxlength="5" class="w-full border px-3 py-2 mb-4 rounded" placeholder="e.g. 10482">
+    <button onclick="validateCard()" class="bg-green-600 text-white px-4 py-2 rounded">Validate Win</button>
+    <div id="result" class="mt-6 text-lg font-semibold"></div>
+    <div id="cardView" class="mt-4 grid grid-cols-5 gap-1 text-center"></div>
+  </div>
+
+  <script>
+    async function getCurrentGame() {
+      try {
+        const res = await fetch("/api/game");
+        const data = await res.json();
+        return data.currentGame || 1;
+      } catch {
+        return 1;
+      }
+    }
+
+    async function validateCard() {
+      const code = document.getElementById("cardCode").value.trim();
+      const resultBox = document.getElementById("result");
+      const cardView = document.getElementById("cardView");
+      cardView.innerHTML = "";
+
+      let cardNumbers = [], calledNumbers = [], currentGame = await getCurrentGame();
+
+      try {
+        const [cardRes, drawRes] = await Promise.all([
+          fetch(`/api/cards/${code}`),
+          fetch("/api/draws")
+        ]);
+
+        if (!cardRes.ok) throw new Error("Card not found");
+        if (!drawRes.ok) throw new Error("Draw data unavailable");
+
+        cardNumbers = (await cardRes.json()).numbers;
+        calledNumbers = await drawRes.json();
+      } catch (e) {
+        resultBox.textContent = "Error: " + e.message;
+        resultBox.className = "text-red-600 font-semibold mt-6";
+        return;
+      }
+
+      const fullCard = [...cardNumbers];
+      fullCard.splice(12, 0, "FREE");
+
+      const matchedMatrix = [];
+      fullCard.forEach((val, i) => {
+        const div = document.createElement("div");
+        div.textContent = val;
+        let isMatched = val === "FREE" || calledNumbers.includes(Number(val));
+        div.className = isMatched
+          ? (val === "FREE" ? "free-space" : "matched") + " p-2 rounded"
+          : "unmatched p-2 rounded";
+        matchedMatrix.push(isMatched);
+        cardView.appendChild(div);
+      });
+
+      function checkWin(matrix) {
+        if (currentGame === 10) {
+          return matrix.every(Boolean) ? [...Array(25).keys()] : null;
+        }
+        if (currentGame === 9) {
+          const topRow = [0, 1, 2, 3, 4];
+          const middleCol = [2, 7, 12, 17, 22];
+          const line = topRow.concat(middleCol.filter(i => !topRow.includes(i)));
+          return line.every(i => matrix[i]) ? line : null;
+        }
+        const winningLines = [
+          [0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10,11,12,13,14],
+          [15,16,17,18,19], [20,21,22,23,24],
+          [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22],
+          [3,8,13,18,23], [4,9,14,19,24],
+          [0,6,12,18,24], [4,8,12,16,20]
+        ];
+        return winningLines.find(line => line.every(i => matrix[i])) || null;
+      }
+
+      const winningLine = checkWin(matchedMatrix);
+      resultBox.textContent = winningLine ? "✅ WINNING CARD" : "❌ Not a win yet";
+      resultBox.className = winningLine ? "text-green-600 font-semibold mt-6" : "text-gray-600 mt-6";
+
+      if (winningLine) {
+        winningLine.forEach(i => {
+          cardView.children[i].classList.add("ring", "ring-4", "ring-green-500");
+        });
+      }
+    }
+  </script>
+</body>
+</html>

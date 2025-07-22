@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bingo Card Viewer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    .card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.25rem; text-align: center; }
+    .card-cell { border: 1px solid #ccc; padding: 1rem; font-size: 1.25rem; }
+    .free-space { background-color: #d1fae5; font-weight: bold; }
+  </style>
+</head>
+<body class="bg-gray-100 p-4 min-h-screen">
+  <div class="max-w-md mx-auto bg-white p-4 rounded shadow">
+    <h1 class="text-xl font-bold mb-4 text-center">Enter Your Bingo Card Code</h1>
+    <input id="cardCode" type="text" maxlength="5" class="w-full border px-3 py-2 mb-4 rounded" placeholder="e.g. 12345" />
+    <button onclick="loadCard()" class="w-full bg-blue-600 text-white px-4 py-2 rounded">Load Card</button>
+    <div id="lastCalled" class="text-center font-bold text-lg text-blue-700 mb-4"></div>
+    <div id="cardView" class="mt-6"></div>
+  </div>
+
+  <script>
+    let liveInterval, lastSnapshot = "";
+
+    document.getElementById("cardCode").addEventListener("input", () => clearInterval(liveInterval));
+
+    async function getCurrentGame() {
+      try {
+        const res = await fetch("/api/game");
+        const data = await res.json();
+        return data.currentGame || 1;
+      } catch {
+        return 1;
+      }
+    }
+
+    async function enableLiveUpdates(code) {
+      liveInterval = setInterval(async () => {
+        const gameNumber = await getCurrentGame();
+        const [cardRes, drawRes] = await Promise.all([
+          fetch(`/api/cards/${code}`),
+          fetch("/api/draws")
+        ]);
+        if (!cardRes.ok || !drawRes.ok) return;
+
+        const cardData = await cardRes.json();
+        const drawData = await drawRes.json();
+
+        const snapshot = JSON.stringify(drawData);
+        if (snapshot === lastSnapshot) return;
+        lastSnapshot = snapshot;
+
+        const fullCard = [...cardData.numbers];
+        fullCard.splice(12, 0, "FREE");
+
+        const cardView = document.getElementById("cardView");
+        cardView.innerHTML = "";
+
+        const headers = ["B", "I", "N", "G", "O"];
+        const grid = document.createElement("div");
+        grid.className = "card-grid";
+        headers.forEach(h => {
+          const cell = document.createElement("div");
+          cell.className = "font-bold card-cell bg-gray-200";
+          cell.textContent = h;
+          grid.appendChild(cell);
+        });
+
+        const matchedMatrix = [];
+        fullCard.forEach((val, i) => {
+          const cell = document.createElement("div");
+          const matched = val === "FREE" || drawData.includes(Number(val));
+          if (matched && val !== "FREE") cell.classList.add("ring", "ring-green-400");
+          cell.className = "card-cell" + (val === "FREE" ? " free-space" : matched ? " bg-green-200" : "");
+          cell.textContent = val;
+          grid.appendChild(cell);
+          matchedMatrix.push(matched);
+        });
+
+        function checkWin(matrix) {
+          if (gameNumber === 10) return matrix.every(Boolean) ? [...Array(25).keys()] : null;
+          if (gameNumber === 9) {
+            const topRow = [0, 1, 2, 3, 4];
+            const midCol = [2, 7, 12, 17, 22];
+            const line = topRow.concat(midCol.filter(i => !topRow.includes(i)));
+            return line.every(i => matrix[i]) ? line : null;
+          }
+          const winLines = [
+            [0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],
+            [15,16,17,18,19],[20,21,22,23,24],
+            [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],
+            [3,8,13,18,23],[4,9,14,19,24],
+            [0,6,12,18,24],[4,8,12,16,20]
+          ];
+          return winLines.find(line => line.every(i => matrix[i])) || null;
+        }
+
+        const winLine = checkWin(matchedMatrix);
+        if (winLine && !document.getElementById("winMessage")) {
+          const msg = document.createElement("div");
+          msg.id = "winMessage";
+          msg.className = "text-center text-green-700 font-bold text-2xl mt-4 animate-pulse";
+          msg.textContent = "🎉 WIN DETECTED! 🎉";
+          cardView.appendChild(msg);
+        }
+
+        cardView.appendChild(grid);
+        const lastNum = drawData[drawData.length - 1];
+        document.getElementById("lastCalled").textContent = lastNum ? `Last number called: ${lastNum}` : "";
+      }, 3000);
+    }
+
+    function loadCard() {
+      const code = document.getElementById("cardCode").value.trim();
+      clearInterval(liveInterval);
+      enableLiveUpdates(code);
+    }
+    window.loadCard = loadCard;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeFromUrl = urlParams.get("code");
+    if (codeFromUrl) {
+      document.getElementById("cardCode").value = codeFromUrl;
+      loadCard();
+    }
+  </script>
+</body>
+</html>

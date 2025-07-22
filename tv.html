@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TV Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(-45deg, #000000, #1a1a2e, #0f3460, #16213e);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #tv-number {
+      font-size: 12rem;
+      text-align: center;
+      flex: 1;
+      text-shadow: 0 0 30px #00f0ff, 0 0 60px #00f0ff;
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    #history {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      width: 250px;
+      text-align: center;
+    }
+
+    #history h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #fff;
+      padding-bottom: 0.5rem;
+      text-shadow: 0 0 10px #ffffff;
+    }
+
+    #history ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #history li {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 0 10px #00ffe0;
+    }
+
+    #draw-counter {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-shadow: 0 0 15px #ff00ff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="tv-number">Waiting...</div>
+
+  <div id="draw-counter">0 / 75</div>
+
+  <div id="history">
+    <h2>Last 10</h2>
+    <ul id="number-history"></ul>
+  </div>
+
+  <script>
+    const tvNumber = document.getElementById("tv-number");
+    const historyList = document.getElementById("number-history");
+    const drawCounter = document.getElementById("draw-counter");
+    const history = [];
+
+    window.addEventListener("message", (e) => {
+      const data = e.data;
+
+      if (data.type === "BINGO_DRAW") {
+        const val = data.value;
+        const count = data.count;
+
+        if (!val) {
+          tvNumber.textContent = "Waiting...";
+          drawCounter.textContent = "0 / 75";
+          history.length = 0;
+          historyList.innerHTML = "";
+          return;
+        }
+
+        if (tvNumber.textContent !== "Waiting...") {
+          history.unshift(tvNumber.textContent);
+          if (history.length > 10) history.pop();
+        }
+
+        tvNumber.textContent = val;
+        drawCounter.textContent = `${count} / 75`;
+
+        tvNumber.style.animation = 'none';
+        tvNumber.offsetHeight;
+        tvNumber.style.animation = 'fadeIn 0.6s ease-in-out';
+
+        historyList.innerHTML = history.map(n => `<li>${n}</li>`).join("");
+      }
+    });
+  </script>
+</body>
+</html>

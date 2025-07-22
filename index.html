@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Admin Login</title>
+  <script defer src="script.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+  <div id="login-page" class="flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+      <h2 class="text-2xl font-bold mb-4 text-center">Admin Login</h2>
+      <input id="username" type="text" placeholder="Username" class="w-full p-2 border mb-4 rounded" />
+      <input id="password" type="password" placeholder="Password" class="w-full p-2 border mb-4 rounded" />
+      <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded">Login</button>
+      <p id="login-error" class="text-red-500 text-sm mt-2 hidden">Incorrect credentials</p>
+    </div>
+  </div>
+
+  <div id="game-page" class="hidden p-4">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Bingo Caller</h1>
+      <span id="game-counter" class="text-lg">Game 1 of 10</span>
+    </div>
+
+    <div class="mb-4">
+      <button onclick="drawNumber()" class="bg-green-500 text-white px-4 py-2 rounded">Draw Number</button>
+      <button onclick="nextGame()" class="ml-2 bg-yellow-500 text-white px-4 py-2 rounded">Next Game</button>
+      <button onclick="resetGame()" class="ml-2 bg-red-500 text-white px-4 py-2 rounded">Reset Game</button>
+	  <button onclick="resetToGameOne()" class="ml-2 bg-gray-700 text-white px-4 py-2 rounded">Reset to Game 1</button>
+      <button onclick="openTVView()" class="ml-2 bg-indigo-500 text-white px-4 py-2 rounded">Open TV View</button>
+      <button onclick="window.open('card-generator.html', '_blank')" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Generate Cards</button>
+      <button onclick="document.getElementById('validatorOverlay').classList.remove('hidden')" class="ml-2 bg-purple-600 text-white px-4 py-2 rounded">Open Validator</button>
+    </div>
+
+    <div id="current-number" class="text-4xl font-bold mb-2"></div>
+    <div id="draw-count" class="text-lg text-gray-700 mb-4"></div>
+
+    <div class="grid grid-cols-5 gap-2 text-center">
+      <div class="font-bold">B</div>
+      <div class="font-bold">I</div>
+      <div class="font-bold">N</div>
+      <div class="font-bold">G</div>
+      <div class="font-bold">O</div>
+    </div>
+    <div id="bingo-board" class="grid grid-cols-5 gap-2 mt-2 text-center"></div>
+  </div>
+
+  <div id="validatorOverlay" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div class="bg-white rounded shadow-lg w-11/12 max-w-2xl h-5/6 relative">
+      <button onclick="closeValidator()" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded">X</button>
+      <iframe src="validator.html" class="w-full h-full rounded" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <script>
+    function closeValidator() {
+      const iframe = document.querySelector('#validatorOverlay iframe');
+      iframe.src = ""; // clear validator state
+      document.getElementById('validatorOverlay').classList.add('hidden');
+      setTimeout(() => {
+        iframe.src = "validator.html"; // reload fresh
+      }, 100);
+    }
+  </script>
+</body>
+</html>
