@@ -24,7 +24,7 @@
   <script>
     async function getCurrentGame() {
       try {
-        const res = await fetch("/api/game");
+        const res = await fetch("https://bingo-backend-v0gd.onrender.com/api/game");
         const data = await res.json();
         return data.currentGame || 1;
       } catch {
@@ -42,8 +42,8 @@
 
       try {
         const [cardRes, drawRes] = await Promise.all([
-          fetch(`/api/cards/${code}`),
-          fetch("/api/draws")
+          fetch(`https://bingo-backend-v0gd.onrender.com/api/cards/${code}`),
+          fetch("https://bingo-backend-v0gd.onrender.com/api/draws")
         ]);
 
         if (!cardRes.ok) throw new Error("Card not found");

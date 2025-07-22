@@ -51,7 +51,7 @@
         container.appendChild(cardElement);
         existingRegistry[code] = numbers;
 
-        fetch("/api/cards", {
+        fetch("https://bingo-backend-v0gd.onrender.com/api/cards", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code, numbers })
